@@ -68,4 +68,35 @@ pub struct Options {
         help = "block size for parallelism"
     )]
     pub block_size: usize,
+
+    #[structopt(
+        long = "max-branching-stride",
+        default_value = "2",
+        help = "gfq-fused: close a kernel after this many branching gates (feynsum-sml's scheduler-max-branching-stride)"
+    )]
+    pub max_branching_stride: usize,
+
+    #[structopt(
+        parse(from_os_str),
+        long = "dump-kernels",
+        help = "write the static kernel sequence (JSON lines) to this file and exit without simulating"
+    )]
+    pub dump_kernels: Option<PathBuf>,
+
+    #[structopt(
+        parse(from_os_str),
+        long = "kernel-stats",
+        help = "parallel simulator: write per-kernel runtime statistics (JSON lines) to this file; adds a separate walk-only timing pass per kernel"
+    )]
+    pub kernel_stats: Option<PathBuf>,
+
+    #[structopt(
+        long = "init-random-nonzeros",
+        default_value = "0",
+        help = "parallel simulator: start from N distinct random basis states with equal weights instead of |0...0>"
+    )]
+    pub init_random_nonzeros: usize,
+
+    #[structopt(long = "seed", default_value = "1", help = "seed for --init-random-nonzeros")]
+    pub seed: u64,
 }

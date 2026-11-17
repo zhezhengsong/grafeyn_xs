@@ -1,7 +1,9 @@
 use std::cmp;
 use std::str::FromStr;
 
+#[cfg(feature = "futhark")]
 pub mod dense_simulator;
+#[cfg(feature = "futhark")]
 pub mod hybrid_simulator;
 pub mod parallel_simulator;
 pub mod sequential_simulator;

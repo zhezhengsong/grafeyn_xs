@@ -1,10 +1,12 @@
 use std::fmt::{self, Display, Formatter};
-use std::sync::{atomic::AtomicBool, atomic::Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::time::{Duration, Instant};
 
 use rayon::prelude::*;
 
 use crate::circuit::{Gate, PullApplyOutput, PushApplicable, PushApplyOutput};
 use crate::config::Config;
+use crate::kernel_stats::{self, WalkProfile};
 use crate::types::{AtomicBasisIdx, BasisIdx, Complex, Real};
 use crate::utility;
 
@@ -27,11 +29,35 @@ impl Display for ExpandMethod {
     }
 }
 
+/// Wall-clock seconds spent in the phases of one expansion.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PhaseProfile {
+    /// counting the input's nonzeros to estimate the output size
+    pub expected_scan: f64,
+    /// allocating the output table
+    pub alloc: f64,
+    /// materializing the input as a list of (bidx, weight)
+    pub gather: f64,
+    /// walking paths and inserting leaves (interleaved)
+    pub walk_and_insert: f64,
+    /// growing the output table after it filled up
+    pub resize: f64,
+    pub num_resizes: usize,
+    /// counting the output's nonzeros
+    pub count: f64,
+    pub output_capacity: usize,
+}
+
 pub struct ExpandResult<B: BasisIdx, AB: AtomicBasisIdx<B>> {
     pub state: State<B, AB>,
     pub num_nonzeros: usize,
     pub num_gate_apps: usize,
     pub method: ExpandMethod,
+    /// time of the expansion itself (excludes the walk-only pass)
+    pub duration: Duration,
+    pub phases: PhaseProfile,
+    /// separate walk-only timing pass; only with --kernel-stats
+    pub walk: Option<WalkProfile>,
 }
 
 pub fn expand<B: BasisIdx, AB: AtomicBasisIdx<B>>(
@@ -41,19 +67,54 @@ pub fn expand<B: BasisIdx, AB: AtomicBasisIdx<B>>(
     prev_num_nonzeros: usize,
     state: State<B, AB>,
 ) -> ExpandResult<B, AB> {
+    let start = Instant::now();
+    let input_num_nonzeros = state.num_nonzeros();
+    let expected_scan = start.elapsed().as_secs_f64();
     let (expected_density, expected_num_nonzeros) =
-        expected_cost(num_qubits, state.num_nonzeros(), prev_num_nonzeros);
+        expected_cost(num_qubits, input_num_nonzeros, prev_num_nonzeros);
 
     let all_gates_pullable = gates.iter().all(|gate| gate.is_pullable());
 
     assert!(config.dense_threshold <= config.pull_threshold);
 
-    if expected_density < config.dense_threshold {
+    let walk_gates = config.kernel_stats.as_ref().map(|_| gates.clone());
+
+    let mut result = if expected_density < config.dense_threshold {
         expand_sparse(gates, num_qubits, config, expected_num_nonzeros, &state)
     } else if expected_density >= config.pull_threshold && all_gates_pullable {
-        expand_pull_dense(gates, num_qubits, state)
+        expand_pull_dense(gates, num_qubits, &state)
     } else {
-        expand_push_dense(gates, num_qubits, state)
+        expand_push_dense(gates, num_qubits, &state)
+    };
+    result.phases.expected_scan = expected_scan;
+    result.duration = start.elapsed();
+
+    if let Some(gates) = walk_gates {
+        if matches!(result.method, ExpandMethod::Sparse | ExpandMethod::PushDense) {
+            let input = materialize(&state);
+            result.walk = Some(kernel_stats::walk_only(&gates, &input));
+        }
+    }
+    result
+}
+
+fn materialize<B: BasisIdx, AB: AtomicBasisIdx<B>>(state: &State<B, AB>) -> Vec<(B, Complex)> {
+    match state {
+        State::Sparse(table) => table.nonzeros(),
+        State::Dense(table) => table
+            .array
+            .par_iter()
+            .enumerate()
+            .filter_map(|(idx, v)| {
+                let weight = utility::unpack_complex(v.load(Ordering::Relaxed));
+                if utility::is_nonzero(weight) {
+                    Some((B::from_idx(idx), weight))
+                } else {
+                    None
+                }
+            })
+            .collect(),
+        State::Never(_, _) => unreachable!(),
     }
 }
 
@@ -151,7 +212,10 @@ pub fn expand_sparse<B: BasisIdx, AB: AtomicBasisIdx<B>>(
     expected_num_nonzeros: usize,
     state: &State<B, AB>,
 ) -> ExpandResult<B, AB> {
+    let t = Instant::now();
     let mut table = SparseStateTable::new(num_qubits, config.maxload, expected_num_nonzeros);
+    let alloc = t.elapsed().as_secs_f64();
+    let t = Instant::now();
     let n: usize = match state {
         State::Sparse(prev_table) => prev_table.num_nonzeros(),
         State::Dense(prev_table) => prev_table.capacity(),
@@ -177,18 +241,26 @@ pub fn expand_sparse<B: BasisIdx, AB: AtomicBasisIdx<B>>(
         }),
         State::Never(_, _) => unreachable!(),
     };
+    let gather = t.elapsed().as_secs_f64();
 
+    let gate_apps = AtomicUsize::new(0);
+    let mut walk_and_insert = 0.0;
+    let mut resize = 0.0;
+    let mut num_resizes = 0;
     while !blocks.is_empty() {
+        let t = Instant::now();
         let is_full: AtomicBool = AtomicBool::new(false);
         blocks = blocks
             .par_iter()
             // We process a given block b in two steps:
             .map(|(b, s, ps)| {
+                let mut apps_here = 0;
                 // (1) we clear any gate applications postponed from resizing the state vector
                 let mut s2 = *s;
                 let mut ps2 = ps.clone();
                 loop {
                     if is_full.load(Ordering::Relaxed) {
+                        gate_apps.fetch_add(apps_here, Ordering::Relaxed);
                         return (*b, s2, ps2);
                     }
                     match ps2.pop() {
@@ -206,9 +278,13 @@ pub fn expand_sparse<B: BasisIdx, AB: AtomicBasisIdx<B>>(
                                 0,
                                 config.maxload,
                             ) {
-                                (_, SuccessorsResult::AllSucceeded) => {}
-                                (_, SuccessorsResult::SomeFailed(fs)) => {
+                                (apps, SuccessorsResult::AllSucceeded) => {
+                                    apps_here += apps;
+                                }
+                                (apps, SuccessorsResult::SomeFailed(fs)) => {
+                                    apps_here += apps;
                                     ps2.extend(fs);
+                                    gate_apps.fetch_add(apps_here, Ordering::Relaxed);
                                     return (*b, s2, ps2);
                                 }
                             }
@@ -224,8 +300,11 @@ pub fn expand_sparse<B: BasisIdx, AB: AtomicBasisIdx<B>>(
                     let (idx, weight) = get(i);
                     match apply_gates1(0, &gates, &table, idx, weight, &is_full, 0, config.maxload)
                     {
-                        (_, SuccessorsResult::AllSucceeded) => {}
-                        (_, SuccessorsResult::SomeFailed(fs)) => {
+                        (apps, SuccessorsResult::AllSucceeded) => {
+                            apps_here += apps;
+                        }
+                        (apps, SuccessorsResult::SomeFailed(fs)) => {
+                            apps_here += apps;
                             s2 = i + 1;
                             ps2.extend(fs);
                             break;
@@ -235,44 +314,71 @@ pub fn expand_sparse<B: BasisIdx, AB: AtomicBasisIdx<B>>(
                         s2 = i + 1
                     }
                 }
+                gate_apps.fetch_add(apps_here, Ordering::Relaxed);
                 (*b, s2, ps2)
             })
             // We keep any block that is not fully processed.
             .filter(|(b, s, ps)| s < &block_stop(*b) || !ps.is_empty())
             .collect();
+        walk_and_insert += t.elapsed().as_secs_f64();
         if !blocks.is_empty() {
+            let t = Instant::now();
             let mut table2 = table.increase_capacity_by_factor(1.5);
             std::mem::swap(&mut table, &mut table2);
+            drop(table2);
+            resize += t.elapsed().as_secs_f64();
+            num_resizes += 1;
         }
     }
+    let t = Instant::now();
     let num_nonzeros = table.num_nonzeros();
-    let num_gate_apps = 0;
+    let count = t.elapsed().as_secs_f64();
+    let output_capacity = table.capacity();
     ExpandResult {
         state: State::Sparse(table),
         num_nonzeros,
-        num_gate_apps,
+        num_gate_apps: gate_apps.into_inner(),
         method: ExpandMethod::Sparse,
+        duration: Duration::ZERO,
+        phases: PhaseProfile {
+            alloc,
+            gather,
+            walk_and_insert,
+            resize,
+            num_resizes,
+            count,
+            output_capacity,
+            ..Default::default()
+        },
+        walk: None,
     }
 }
 
 fn expand_push_dense<B: BasisIdx, AB: AtomicBasisIdx<B>>(
     gates: Vec<&Gate<B>>,
     num_qubits: usize,
-    state: State<B, AB>,
+    state: &State<B, AB>,
 ) -> ExpandResult<B, AB> {
+    let t = Instant::now();
     let table = DenseStateTable::new(num_qubits);
+    let alloc = t.elapsed().as_secs_f64();
 
+    let mut gather = 0.0;
+    let t = Instant::now();
     let num_gate_apps = match state {
         // FIXME: There should be better way to parallelize iteration over nonzeros of State::Sparse
         // FIXME: Refactor this iterator generation
-        State::Sparse(prev_table) => prev_table
-            .nonzeros()
-            .into_par_iter()
-            .map(|(bidx, weight)| apply_gates(&gates, &table, bidx, weight))
-            .sum(),
+        State::Sparse(prev_table) => {
+            let nonzeros = prev_table.nonzeros();
+            gather = t.elapsed().as_secs_f64();
+            nonzeros
+                .into_par_iter()
+                .map(|(bidx, weight)| apply_gates(&gates, &table, bidx, weight))
+                .sum()
+        }
         State::Dense(prev_table) => prev_table
             .array
-            .into_par_iter()
+            .par_iter()
             .enumerate()
             .map(|(idx, v)| {
                 let weight = utility::unpack_complex(v.load(Ordering::Relaxed));
@@ -281,32 +387,49 @@ fn expand_push_dense<B: BasisIdx, AB: AtomicBasisIdx<B>>(
             .sum(),
         State::Never(_, _) => unreachable!(),
     };
+    let walk_and_insert = t.elapsed().as_secs_f64() - gather;
 
+    let t = Instant::now();
     let num_nonzeros = table.num_nonzeros();
+    let count = t.elapsed().as_secs_f64();
+    let output_capacity = table.capacity();
 
     ExpandResult {
         state: State::Dense(table),
         num_nonzeros,
         num_gate_apps,
         method: ExpandMethod::PushDense,
+        duration: Duration::ZERO,
+        phases: PhaseProfile {
+            alloc,
+            gather,
+            walk_and_insert,
+            count,
+            output_capacity,
+            ..Default::default()
+        },
+        walk: None,
     }
 }
 
 fn expand_pull_dense<B: BasisIdx, AB: AtomicBasisIdx<B>>(
     gates: Vec<&Gate<B>>,
     num_qubits: usize,
-    state: State<B, AB>,
+    state: &State<B, AB>,
 ) -> ExpandResult<B, AB> {
+    let t = Instant::now();
     let table = DenseStateTable::new(num_qubits);
     let capacity = 1 << num_qubits;
+    let alloc = t.elapsed().as_secs_f64();
 
+    let t = Instant::now();
     let (num_gate_apps, num_nonzeros) = (0..capacity)
         .into_par_iter()
         .fold(
             || (0, 0),
             |acc, idx| {
                 let bidx = B::from_idx(idx);
-                let (weight, num_gate_apps_here) = apply_pull_gates(&gates, &state, bidx.clone());
+                let (weight, num_gate_apps_here) = apply_pull_gates(&gates, state, bidx.clone());
                 table.atomic_put(bidx, weight);
                 (
                     acc.0 + num_gate_apps_here,
@@ -315,12 +438,21 @@ fn expand_pull_dense<B: BasisIdx, AB: AtomicBasisIdx<B>>(
             },
         )
         .reduce(|| (0, 0), |a, b| (a.0 + b.0, a.1 + b.1));
+    let walk_and_insert = t.elapsed().as_secs_f64();
 
     ExpandResult {
         state: State::Dense(table),
         num_nonzeros,
         num_gate_apps,
         method: ExpandMethod::PullDense,
+        duration: Duration::ZERO,
+        phases: PhaseProfile {
+            alloc,
+            walk_and_insert,
+            output_capacity: capacity,
+            ..Default::default()
+        },
+        walk: None,
     }
 }
 

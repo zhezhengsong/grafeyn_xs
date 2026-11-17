@@ -10,7 +10,9 @@ mod greedy_nonbranching_gate_scheduler;
 mod naive_gate_scheduler;
 mod utility;
 
-pub use greedy_finish_qubit_gate_scheduler::GreedyFinishQubitGateScheduler;
+pub use greedy_finish_qubit_gate_scheduler::{
+    GreedyFinishQubitFusedGateScheduler, GreedyFinishQubitGateScheduler,
+};
 pub use greedy_nonbranching_gate_scheduler::GreedyNonbranchingGateScheduler;
 pub use naive_gate_scheduler::NaiveGateScheduler;
 
@@ -19,6 +21,9 @@ pub enum GateSchedulingPolicy {
     Naive,
     GreedyNonbranching,
     GreedyFinishQubit,
+    /// greedy-finish-qubit with kernel fusion, ported from feynsum-sml's
+    /// `GateSchedulerGreedyFinishQubit.pickNext` (the scheduler used in the paper)
+    GreedyFinishQubitFused,
 }
 
 impl FromStr for GateSchedulingPolicy {
@@ -29,8 +34,11 @@ impl FromStr for GateSchedulingPolicy {
             "naive" => Ok(GateSchedulingPolicy::Naive),
             "greedy-nonbranching" | "gnb" => Ok(GateSchedulingPolicy::GreedyNonbranching),
             "greedy-finish-qubit" | "gfq" => Ok(GateSchedulingPolicy::GreedyFinishQubit),
+            "greedy-finish-qubit-fused" | "gfq-fused" => {
+                Ok(GateSchedulingPolicy::GreedyFinishQubitFused)
+            }
             _ => Err(format!(
-                "unknown gate scheduling policy: {}; valid values are: naive, gnb",
+                "unknown gate scheduling policy: {}; valid values are: naive, gnb, gfq, gfq-fused",
                 s
             )),
         }
@@ -43,6 +51,9 @@ impl Display for GateSchedulingPolicy {
             GateSchedulingPolicy::Naive => write!(f, "naive"),
             GateSchedulingPolicy::GreedyNonbranching => write!(f, "greedy-nonbranching"),
             GateSchedulingPolicy::GreedyFinishQubit => write!(f, "greedy-finish-qubit"),
+            GateSchedulingPolicy::GreedyFinishQubitFused => {
+                write!(f, "greedy-finish-qubit-fused")
+            }
         }
     }
 }
@@ -92,6 +103,27 @@ pub fn create_gate_scheduler<'a, B: BasisIdx>(
                 num_gates,
                 num_qubits,
                 gate_touches,
+            ))
+        }
+        GateSchedulingPolicy::GreedyFinishQubitFused => {
+            log::info!(
+                "using greedy finish qubit gate scheduler with fusion (max branching stride {})",
+                config.max_branching_stride
+            );
+            // feynsum-sml decides single-qubit unitaries (u, u1, u2, u3, rx) by
+            // their matrix zero pattern; mirror that so kernels match the SML ones.
+            let gate_is_branching_sml = circuit
+                .gates
+                .iter()
+                .map(|gate| gate.is_branching_sml())
+                .collect();
+            Box::new(GreedyFinishQubitFusedGateScheduler::new(
+                num_gates,
+                num_qubits,
+                gate_touches,
+                gate_is_branching_sml,
+                config.max_branching_stride,
+                disable_gate_fusion,
             ))
         }
     }

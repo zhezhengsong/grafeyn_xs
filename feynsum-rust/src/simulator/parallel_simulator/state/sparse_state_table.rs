@@ -65,6 +65,13 @@ impl<B: BasisIdx, AB: AtomicBasisIdx<B>> SparseStateTable<B, AB> {
         t.force_insert_unique(bidx, weight);
         t
     }
+    pub fn from_unique_entries(num_qubits: usize, maxload: Real, entries: Vec<(B, Complex)>) -> Self {
+        let t = SparseStateTable::new(num_qubits, maxload, entries.len());
+        for (bidx, weight) in entries {
+            t.force_insert_unique(bidx, weight);
+        }
+        t
+    }
     pub fn capacity(&self) -> usize {
         self.keys.len()
     }

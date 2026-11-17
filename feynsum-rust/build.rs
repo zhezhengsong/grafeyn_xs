@@ -1,6 +1,12 @@
-use std::path::PathBuf;
-
 fn main() {
+    #[cfg(feature = "futhark")]
+    build_futhark();
+}
+
+#[cfg(feature = "futhark")]
+fn build_futhark() {
+    use std::path::PathBuf;
+
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let futhark_backend = match option_env!("FUTHARK_BACKEND") {
         None => futhark_bindgen::Backend::C,

@@ -63,3 +63,55 @@ impl<'a> GreedyFinishQubitGateScheduler<'a> {
         }
     }
 }
+
+/// Port of `pickNext` in feynsum-sml's `GateSchedulerGreedyFinishQubit.sml`:
+/// keep taking the next greedy-finish-qubit gate until the kernel contains
+/// `max_branching_stride` branching gates (or the circuit is exhausted).
+pub struct GreedyFinishQubitFusedGateScheduler<'a> {
+    inner: GreedyFinishQubitGateScheduler<'a>,
+    gate_is_branching: Vec<bool>,
+    max_branching_stride: usize,
+    disable_gate_fusion: bool,
+}
+
+impl<'a> GateScheduler for GreedyFinishQubitFusedGateScheduler<'a> {
+    fn pick_next_gates(&mut self) -> Vec<GateIndex> {
+        if self.disable_gate_fusion {
+            return self.inner.pick_next_gates();
+        }
+        let mut next_gates = Vec::new();
+        let mut num_branching_so_far = 0;
+        while num_branching_so_far < self.max_branching_stride {
+            // the unfused scheduler returns at most one (already visited) gate
+            match self.inner.pick_next_gates().pop() {
+                None => break,
+                Some(gi) => {
+                    if self.gate_is_branching[gi] {
+                        num_branching_so_far += 1;
+                    }
+                    next_gates.push(gi);
+                }
+            }
+        }
+        next_gates
+    }
+}
+
+impl<'a> GreedyFinishQubitFusedGateScheduler<'a> {
+    pub fn new(
+        num_gates: usize,
+        num_qubits: usize,
+        gate_touches: Vec<&'a [QubitIndex]>,
+        gate_is_branching: Vec<bool>,
+        max_branching_stride: usize,
+        disable_gate_fusion: bool,
+    ) -> Self {
+        assert_eq!(gate_is_branching.len(), num_gates);
+        Self {
+            inner: GreedyFinishQubitGateScheduler::new(num_gates, num_qubits, gate_touches),
+            gate_is_branching,
+            max_branching_stride,
+            disable_gate_fusion,
+        }
+    }
+}

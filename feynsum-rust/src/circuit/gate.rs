@@ -134,6 +134,92 @@ impl<B: BasisIdx> Gate<B> {
     pub fn is_pullable(&self) -> bool {
         self.pull_action.is_some()
     }
+
+    /// Branching as classified by feynsum-sml: single-qubit unitaries (U, RX)
+    /// are non-branching when their matrix is diagonal or anti-diagonal (e.g.
+    /// u1), FSim stays "maybe" (counted as branching), everything else agrees
+    /// with `is_branching`.
+    pub fn is_branching_sml(&self) -> bool {
+        match self.defn {
+            GateDefn::U { .. } | GateDefn::RX { .. } => {
+                let (a, b, c, d) = self.defn.single_qubit_matrix().unwrap();
+                let nonbranching = (utility::is_zero(a) && utility::is_zero(d))
+                    || (utility::is_zero(b) && utility::is_zero(c));
+                !nonbranching
+            }
+            _ => self.is_branching(),
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match &self.defn {
+            GateDefn::CCX { .. } => "ccx",
+            GateDefn::CPhase { .. } => "cphase",
+            GateDefn::CSwap { .. } => "cswap",
+            GateDefn::CX { .. } => "cx",
+            GateDefn::CZ { .. } => "cz",
+            GateDefn::FSim { .. } => "fsim",
+            GateDefn::Hadamard(_) => "h",
+            GateDefn::PauliY(_) => "y",
+            GateDefn::PauliZ(_) => "z",
+            GateDefn::Phase { .. } => "phase",
+            GateDefn::RX { .. } => "rx",
+            GateDefn::RY { .. } => "ry",
+            GateDefn::RZ { .. } => "rz",
+            GateDefn::S(_) => "s",
+            GateDefn::Sdg(_) => "sdg",
+            GateDefn::SqrtX(_) => "sx",
+            GateDefn::SqrtXdg(_) => "sxdg",
+            GateDefn::Swap { .. } => "swap",
+            GateDefn::T(_) => "t",
+            GateDefn::Tdg(_) => "tdg",
+            GateDefn::U { .. } => "u",
+            GateDefn::X(_) => "x",
+            GateDefn::Other { name, .. } => name.as_str(),
+        }
+    }
+
+    pub fn params(&self) -> Vec<Real> {
+        match &self.defn {
+            GateDefn::CPhase { rot, .. }
+            | GateDefn::Phase { rot, .. }
+            | GateDefn::RX { rot, .. }
+            | GateDefn::RY { rot, .. }
+            | GateDefn::RZ { rot, .. } => vec![*rot],
+            GateDefn::FSim { theta, phi, .. } => vec![*theta, *phi],
+            GateDefn::U {
+                theta, phi, lambda, ..
+            } => vec![*theta, *phi, *lambda],
+            GateDefn::Other { params, .. } => params.clone(),
+            _ => vec![],
+        }
+    }
+}
+
+impl GateDefn {
+    /// (a, b, c, d) of [[a, b], [c, d]] for U and RX, exactly as push_apply builds them
+    fn single_qubit_matrix(&self) -> Option<(Complex, Complex, Complex, Complex)> {
+        match *self {
+            GateDefn::RX { rot, .. } => {
+                let cos = Complex::new((rot / 2.0).cos(), 0.0);
+                let sin = Complex::new((rot / 2.0).sin(), 0.0);
+                let b = sin * Complex::new(0.0, -1.0);
+                Some((cos, b, b, cos))
+            }
+            GateDefn::U {
+                theta, phi, lambda, ..
+            } => {
+                let cos = Complex::new((theta / 2.0).cos(), 0.0);
+                let sin = Complex::new((theta / 2.0).sin(), 0.0);
+                let a = cos;
+                let b = -sin * Complex::new(lambda.cos(), lambda.sin());
+                let c = sin * Complex::new(phi.cos(), phi.sin());
+                let d = cos * Complex::new((phi + lambda).cos(), (phi + lambda).sin());
+                Some((a, b, c, d))
+            }
+            _ => None,
+        }
+    }
 }
 
 fn create_touches(defn: &GateDefn) -> Vec<QubitIndex> {

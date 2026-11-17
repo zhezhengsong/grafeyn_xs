@@ -1,8 +1,10 @@
 mod circuit;
 mod config;
 mod fingerprint;
+#[cfg(feature = "futhark")]
 mod futhark;
 mod gate_scheduler;
+mod kernel_stats;
 mod options;
 mod parser;
 mod simulator;
@@ -79,7 +81,15 @@ fn build_circuit_and_run<B: BasisIdx, AB: AtomicBasisIdx<B>>(
         }
     };
 
-    log::info!("circuit construction complete. starting simulation");
+    log::info!("circuit construction complete.");
+
+    if let Some(path) = &options.dump_kernels {
+        kernel_stats::dump_static_kernels(&config, &circuit, path)?;
+        log::info!("static kernel sequence written to {}", path.display());
+        return Ok(());
+    }
+
+    log::info!("starting simulation");
 
     let num_qubits = circuit.num_qubits;
 
@@ -111,13 +121,23 @@ fn run<B: BasisIdx, AB: AtomicBasisIdx<B>>(
             log::info!("using parallel simulator");
             simulator::parallel_simulator::run::<B, AB>(&config, circuit).compactify()
         }
+        #[cfg(feature = "futhark")]
         Simulator::Dense => {
             log::info!("using dense simulator");
             simulator::dense_simulator::run(&config, circuit).compactify()
         }
+        #[cfg(not(feature = "futhark"))]
+        Simulator::Dense => {
+            panic!("the dense simulator needs Futhark; rebuild with `--features futhark`")
+        }
+        #[cfg(feature = "futhark")]
         Simulator::Hybrid => {
             log::info!("using hybrid simulator");
             simulator::hybrid_simulator::run::<B, AB>(&config, circuit)
+        }
+        #[cfg(not(feature = "futhark"))]
+        Simulator::Hybrid => {
+            panic!("the hybrid simulator needs Futhark; rebuild with `--features futhark`")
         }
     }
 }
