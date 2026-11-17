@@ -1,0 +1,54 @@
+gate: 0   density: 0.00000001 nonzero:          1 hop: 3  push sparse time: 0.0001s throughput: 0.08M gates/s
+gate: 3   density: 0.00000006 nonzero:          4 hop: 8  push sparse time: 0.0000s throughput: 1.89M gates/s
+gate: 11  density: 0.00000006 nonzero:          4 hop: 5  push sparse time: 0.0001s throughput: 0.37M gates/s
+gate: 16  density: 0.00000024 nonzero:         16 hop: 13 push sparse time: 0.0000s throughput: 12.97M gates/s
+gate: 29  density: 0.00000024 nonzero:         16 hop: 4  push sparse time: 0.0000s throughput: 3.41M gates/s
+gate: 33  density: 0.00000024 nonzero:         16 hop: 5  push sparse time: 0.0001s throughput: 1.27M gates/s
+gate: 38  density: 0.00000095 nonzero:         64 hop: 13 push sparse time: 0.0000s throughput: 27.04M gates/s
+gate: 51  density: 0.00000095 nonzero:         64 hop: 4  push sparse time: 0.0000s throughput: 11.64M gates/s
+gate: 55  density: 0.00000095 nonzero:         64 hop: 5  push sparse time: 0.0001s throughput: 4.11M gates/s
+gate: 60  density: 0.00000381 nonzero:        256 hop: 13 push sparse time: 0.0001s throughput: 56.51M gates/s
+gate: 73  density: 0.00000381 nonzero:        256 hop: 4  push sparse time: 0.0001s throughput: 16.64M gates/s
+gate: 77  density: 0.00000381 nonzero:        256 hop: 5  push sparse time: 0.0002s throughput: 9.17M gates/s
+gate: 82  density: 0.00001526 nonzero:       1024 hop: 13 push sparse time: 0.0002s throughput: 102.34M gates/s
+gate: 95  density: 0.00001526 nonzero:       1024 hop: 4  push sparse time: 0.0001s throughput: 48.31M gates/s
+gate: 99  density: 0.00001526 nonzero:       1024 hop: 5  push sparse time: 0.0004s throughput: 20.30M gates/s
+gate: 104 density: 0.00006104 nonzero:       4096 hop: 13 push sparse time: 0.0004s throughput: 172.77M gates/s
+gate: 117 density: 0.00006104 nonzero:       4096 hop: 4  push sparse time: 0.0003s throughput: 73.42M gates/s
+gate: 121 density: 0.00006104 nonzero:       4096 hop: 5  push sparse time: 0.0007s throughput: 41.81M gates/s
+gate: 126 density: 0.00024414 nonzero:      16384 hop: 13 push sparse time: 0.0011s throughput: 230.33M gates/s
+gate: 139 density: 0.00024414 nonzero:      16384 hop: 4  push sparse time: 0.0010s throughput: 100.51M gates/s
+gate: 143 density: 0.00024414 nonzero:      16384 hop: 5  push sparse time: 0.0018s throughput: 63.82M gates/s
+gate: 148 density: 0.00097656 nonzero:      65536 hop: 13 push sparse time: 0.0039s throughput: 249.25M gates/s
+gate: 161 density: 0.00097656 nonzero:      65536 hop: 4  push sparse time: 0.0036s throughput: 110.06M gates/s
+gate: 165 density: 0.00097656 nonzero:      65536 hop: 5  push sparse time: 0.0060s throughput: 76.91M gates/s
+gate: 170 density: 0.00390625 nonzero:     262144 hop: 13 push sparse time: 0.0187s throughput: 210.64M gates/s
+gate: 183 density: 0.00390625 nonzero:     262144 hop: 4  push sparse time: 0.0142s throughput: 111.06M gates/s
+gate: 187 density: 0.00390625 nonzero:     262144 hop: 5  push sparse time: 0.0292s throughput: 62.82M gates/s
+gate: 192 density: 0.01562500 nonzero:    1048576 hop: 13 push sparse time: 0.0880s throughput: 178.67M gates/s
+gate: 205 density: 0.01562500 nonzero:    1048576 hop: 4  push sparse time: 0.0699s throughput: 89.97M gates/s
+gate: 209 density: 0.01562500 nonzero:    1048576 hop: 5  push sparse time: 0.1658s throughput: 44.28M gates/s
+gate: 214 density: 0.06250000 nonzero:    4194304 hop: 13 push dense time: 0.1993s throughput: 315.68M gates/s
+gate: 227 density: 0.06250000 nonzero:    4194304 hop: 4  push sparse time: 0.4913s throughput: 51.22M gates/s
+gate: 231 density: 0.06250000 nonzero:    4194304 hop: 5  push sparse time: 0.8199s throughput: 35.81M gates/s
+gate: 236 density: 0.25000000 nonzero:   16777216 hop: 13 push dense time: 0.8242s throughput: 305.32M gates/s
+gate: 249 density: 0.25000000 nonzero:   16777216 hop: 4  push dense time: 0.2072s throughput: 485.90M gates/s
+gate: 253 density: 0.25000000 nonzero:   16777216 hop: 5  push dense time: 0.2447s throughput: 479.98M gates/s
+gate: 258 density: 1.00000000 nonzero:   67108864 hop: 13 push dense time: 1.6040s throughput: 627.59M gates/s
+gate: 271 density: 1.00000000 nonzero:   67108864 hop: 4  push dense time: 0.6481s throughput: 621.30M gates/s
+gate: 275 density: 1.00000000 nonzero:   67108864 hop: 4  push dense time: 0.6522s throughput: 617.37M gates/s
+gate: 279 density: 1.00000000 nonzero:   67108864 hop: 1  push dense time: 0.1482s throughput: 452.93M gates/s
+gate: 280 density: 1.00000000 nonzero:   67108864
+gate app count: 2505397513, time: 11.056869s
+kernels: 40, expand time (excluding --kernel-stats instrumentation): 6.244983586s
+computed fingerprint:
+fp0 01011011011100011110001110 0.00003851+0.00011584i
+fp1 01101010011001110100100001 0.00008937-0.00008315i
+fp2 01110000010001110110010111 0.00001996+0.00012043i
+fp3 11110000010001110110010111 0.00008818-0.00008442i
+fp4 00000001111010111111000000 0.00011990+0.00002294i
+fp5 00000101111100000111000110 0.00001194-0.00012149i
+fp6 00001001010110100010111110 0.00007707+0.00009466i
+fp7 00001001101010001001101111 -0.00004943-0.00011161i
+fp8 00001101101111001110100100 0.00009268+0.00007944i
+fp9 00010000111000000111100100 0.00012096-0.00001644i

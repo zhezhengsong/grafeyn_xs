@@ -1,0 +1,27 @@
+gate: 0   density: 0.00000003 nonzero:          1 hop: 2  push sparse time: 0.0001s throughput: 0.06M gates/s
+gate: 2   density: 0.00000012 nonzero:          4 hop: 3  push sparse time: 0.0000s throughput: 0.90M gates/s
+gate: 5   density: 0.00000048 nonzero:         16 hop: 3  push sparse time: 0.0000s throughput: 3.14M gates/s
+gate: 8   density: 0.00000191 nonzero:         64 hop: 3  push sparse time: 0.0000s throughput: 10.59M gates/s
+gate: 11  density: 0.00000763 nonzero:        256 hop: 3  push sparse time: 0.0001s throughput: 12.65M gates/s
+gate: 14  density: 0.00003052 nonzero:       1024 hop: 3  push sparse time: 0.0002s throughput: 30.53M gates/s
+gate: 17  density: 0.00012207 nonzero:       4096 hop: 3  push sparse time: 0.0005s throughput: 38.89M gates/s
+gate: 20  density: 0.00048828 nonzero:      16384 hop: 3  push sparse time: 0.0011s throughput: 71.71M gates/s
+gate: 23  density: 0.00195312 nonzero:      65536 hop: 3  push sparse time: 0.0042s throughput: 77.97M gates/s
+gate: 26  density: 0.00781250 nonzero:     262144 hop: 3  push sparse time: 0.0210s throughput: 62.49M gates/s
+gate: 29  density: 0.03125000 nonzero:    1048576 hop: 3  push sparse time: 0.1561s throughput: 33.58M gates/s
+gate: 32  density: 0.12465858 nonzero:    4182848 hop: 3  push dense time: 0.1812s throughput: 112.88M gates/s
+gate: 35  density: 0.47891164 nonzero:   16069608 hop: 3  push dense time: 0.1510s throughput: 525.63M gates/s
+gate: 38 density: 0.94070983 nonzero:   31564984
+gate app count: 106831231, time: 0.7653709s
+kernels: 13, expand time (excluding --kernel-stats instrumentation): 0.515616125s
+computed fingerprint:
+fp0 1000100110001000100110000 0.02735132+0.00000000i
+fp1 1000100110001000101110000 0.02700043+0.00000000i
+fp2 1000101110001000100110000 0.02700043+0.00000000i
+fp3 1000101110001000101110000 0.02664457+0.00000000i
+fp4 1000100110001000110110000 0.02402681+0.00000000i
+fp5 1000110110001000100110000 0.02402681+0.00000000i
+fp6 1000100110001000111110000 0.02393574+0.00000000i
+fp7 1000111110001000100110000 0.02393574+0.00000000i
+fp8 1000101110001000110110000 0.02350138+0.00000000i
+fp9 1000110110001000101110000 0.02350138+0.00000000i

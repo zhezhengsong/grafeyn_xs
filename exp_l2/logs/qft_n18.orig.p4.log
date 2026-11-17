@@ -1,0 +1,23 @@
+gate: 0   density: 0.00000381 nonzero:          1 hop: 87 push sparse time: 0.0004s throughput: 0.48M gates/s
+gate: 87  density: 0.00001526 nonzero:          4 hop: 157 push sparse time: 0.0001s throughput: 16.82M gates/s
+gate: 244 density: 0.00006104 nonzero:         16 hop: 137 push sparse time: 0.0004s throughput: 8.49M gates/s
+gate: 381 density: 0.00024414 nonzero:         64 hop: 117 push sparse time: 0.0003s throughput: 31.98M gates/s
+gate: 498 density: 0.00097656 nonzero:        256 hop: 97 push sparse time: 0.0006s throughput: 64.72M gates/s
+gate: 595 density: 0.00390625 nonzero:       1024 hop: 77 push sparse time: 0.0009s throughput: 132.32M gates/s
+gate: 672 density: 0.01562500 nonzero:       4096 hop: 57 push sparse time: 0.0034s throughput: 100.00M gates/s
+gate: 729 density: 0.06250000 nonzero:      16384 hop: 37 push dense time: 0.0026s throughput: 332.09M gates/s
+gate: 766 density: 0.25000000 nonzero:      65536 hop: 17 push dense time: 0.0042s throughput: 358.00M gates/s
+gate: 783 density: 1.00000000 nonzero:     262144
+gate app count: 2883393, time: 0.022782376s
+kernels: 9, expand time (excluding --kernel-stats instrumentation): 0.012810418s
+computed fingerprint:
+fp0 000000000000000000 0.00195312+0.00000000i
+fp1 000000000100000000 0.00195312+0.00000000i
+fp2 010000000000000000 0.00195312+0.00000000i
+fp3 010000000100000000 0.00195312+0.00000000i
+fp4 100000000000000000 0.00195312+0.00000000i
+fp5 100000000100000000 0.00195312+0.00000000i
+fp6 110000000000000000 0.00195312+0.00000000i
+fp7 110000000100000000 0.00195312+0.00000000i
+fp8 000000000000000001 0.00195312+0.00000000i
+fp9 000000000000000100 0.00195312+0.00000000i

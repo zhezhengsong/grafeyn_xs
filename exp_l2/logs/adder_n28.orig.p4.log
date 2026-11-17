@@ -1,0 +1,6 @@
+gate: 0   density: 0.00000000 nonzero:          1 hop: 88 push sparse time: 0.0000s throughput: 2.40M gates/s
+gate: 88 density: 0.00000000 nonzero:          1
+gate app count: 88, time: 0.000200209s
+kernels: 1, expand time (excluding --kernel-stats instrumentation): 0.000036625s
+computed fingerprint:
+fp0 1111000000000000111111111110 1.00000000+0.00000000i

@@ -1,0 +1,13 @@
+{"kernel":0,"gates":[24,0],"names":["h","ry"],"qubits":[[0],[1]],"params":[[],[0.93346816]],"branching_rust":[1,1],"branching_sml":[1,1],"len":2,"k":2}
+{"kernel":1,"gates":[12,25,1],"names":["ry","cswap","ry"],"qubits":[[13],[0,1,13],[2]],"params":[[0.6905752],[],[0.82988214]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":2,"gates":[13,26,2],"names":["ry","cswap","ry"],"qubits":[[14],[0,2,14],[3]],"params":[[0.7429451],[],[1.181111]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":3,"gates":[14,27,3],"names":["ry","cswap","ry"],"qubits":[[15],[0,3,15],[4]],"params":[[0.79338646],[],[1.802503]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":4,"gates":[15,28,4],"names":["ry","cswap","ry"],"qubits":[[16],[0,4,16],[5]],"params":[[1.9075145],[],[2.969805]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":5,"gates":[16,29,5],"names":["ry","cswap","ry"],"qubits":[[17],[0,5,17],[6]],"params":[[2.5852456],[],[1.5765553]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":6,"gates":[17,30,6],"names":["ry","cswap","ry"],"qubits":[[18],[0,6,18],[7]],"params":[[1.538863],[],[1.8340893]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":7,"gates":[18,31,7],"names":["ry","cswap","ry"],"qubits":[[19],[0,7,19],[8]],"params":[[0.8484669],[],[2.741925]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":8,"gates":[19,32,8],"names":["ry","cswap","ry"],"qubits":[[20],[0,8,20],[9]],"params":[[1.9789906],[],[1.5106361]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":9,"gates":[20,33,9],"names":["ry","cswap","ry"],"qubits":[[21],[0,9,21],[10]],"params":[[1.177473],[],[0.7635404]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":10,"gates":[21,34,10],"names":["ry","cswap","ry"],"qubits":[[22],[0,10,22],[11]],"params":[[0.46112785],[],[0.15484631]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":11,"gates":[22,35,11],"names":["ry","cswap","ry"],"qubits":[[23],[0,11,23],[12]],"params":[[0.17065065],[],[1.9311432]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":4}
+{"kernel":12,"gates":[23,36,37],"names":["ry","cswap","h"],"qubits":[[24],[0,12,24],[0]],"params":[[1.8262873],[],[]],"branching_rust":[1,0,1],"branching_sml":[1,0,1],"len":3,"k":3}
