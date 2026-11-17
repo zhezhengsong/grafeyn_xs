@@ -198,7 +198,7 @@ impl<B: BasisIdx> Gate<B> {
 
 impl GateDefn {
     /// (a, b, c, d) of [[a, b], [c, d]] for U and RX, exactly as push_apply builds them
-    fn single_qubit_matrix(&self) -> Option<(Complex, Complex, Complex, Complex)> {
+    pub(crate) fn single_qubit_matrix(&self) -> Option<(Complex, Complex, Complex, Complex)> {
         match *self {
             GateDefn::RX { rot, .. } => {
                 let cos = Complex::new((rot / 2.0).cos(), 0.0);

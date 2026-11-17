@@ -1,4 +1,5 @@
 mod circuit;
+mod compiler;
 mod config;
 mod fingerprint;
 #[cfg(feature = "futhark")]
@@ -82,6 +83,18 @@ fn build_circuit_and_run<B: BasisIdx, AB: AtomicBasisIdx<B>>(
     };
 
     log::info!("circuit construction complete.");
+
+    if let Some(path) = &options.dump_ir {
+        compiler::dump_ir(&config, &circuit, path)?;
+        log::info!("kernel IR written to {}", path.display());
+        return Ok(());
+    }
+
+    if options.check_ir {
+        let report = compiler::check::check_circuit(&config, &circuit, options.seed);
+        println!("{}", report);
+        std::process::exit(if report.ok() { 0 } else { 1 });
+    }
 
     if let Some(path) = &options.dump_kernels {
         kernel_stats::dump_static_kernels(&config, &circuit, path)?;

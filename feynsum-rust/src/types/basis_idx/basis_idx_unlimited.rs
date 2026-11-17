@@ -61,8 +61,10 @@ impl BasisIdx for BasisIdxUnlimited {
         resize_if_needed(&mut new_bits, qi1);
         resize_if_needed(&mut new_bits, qi2);
 
-        new_bits.set(qi1, self.bits[qi2]);
-        new_bits.set(qi2, self.bits[qi1]);
+        // read through `get`: bits past the end of a short vector are 0
+        // (indexing `self.bits` directly panicked on e.g. `zeros().swap(3, 5)`)
+        new_bits.set(qi1, self.get(qi2));
+        new_bits.set(qi2, self.get(qi1));
 
         Self { bits: new_bits }
     }
@@ -114,5 +116,18 @@ impl AtomicBasisIdx<BasisIdxUnlimited> for RwLock<BasisIdxUnlimited> {
         } else {
             Err(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_swap_beyond_length() {
+        let b = BasisIdxUnlimited::zeros().set(5);
+        let s = b.swap(5, 70);
+        assert!(!s.get(5) && s.get(70));
+        assert!(!BasisIdxUnlimited::zeros().swap(3, 9).get(3));
     }
 }

@@ -97,6 +97,19 @@ pub struct Options {
     )]
     pub init_random_nonzeros: usize,
 
-    #[structopt(long = "seed", default_value = "1", help = "seed for --init-random-nonzeros")]
+    #[structopt(
+        parse(from_os_str),
+        long = "dump-ir",
+        help = "write the lowered IR of every kernel (text) to this file and exit without simulating"
+    )]
+    pub dump_ir: Option<PathBuf>,
+
+    #[structopt(
+        long = "check-ir",
+        help = "lower every kernel to IR and check it against the interpreter on the bits it touches; exit without simulating"
+    )]
+    pub check_ir: bool,
+
+    #[structopt(long = "seed", default_value = "1", help = "seed for --init-random-nonzeros and --check-ir")]
     pub seed: u64,
 }

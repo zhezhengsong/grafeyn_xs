@@ -30,3 +30,10 @@ Run from |0>
 ```
 
 Run from 65536 starting points
+```
+    for c in "${SPARSE[@]}"; do echo "wide $c"; $BIN -i circuits/$c.qasm --scheduler gfq-fused --pull-threshold 1.1 --parallelism 4 --init-random-nonzeros 65536 --seed 1 --kernel-stats raw/runtime/$c.wide.p4.jsonl > logs/$c.wide.p4.log 2>&1 || echo "  FAILED $c"; done
+```
+
+python3 scripts/rank_l2.py
+
+python3 scripts/rank_l2_walk.py
